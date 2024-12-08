@@ -23,18 +23,20 @@ This project is a comprehensive analysis of Netflix's movies and TV shows datase
 
 ## 🗂️ Schema
 ```sql
-CREATE TABLE netflix_content (
-    id SERIAL PRIMARY KEY,
-    title TEXT,
-    type TEXT,
-    director TEXT,
-    cast TEXT,
-    country TEXT,
-    release_year INT,
-    rating TEXT,
-    duration TEXT,
-    listed_in TEXT,
-    description TEXT
+create table netflix
+(
+show_id varchar(10),
+type varchar(10),
+title varchar(150),
+director varchar(250),
+casts varchar(1000),
+country varchar(150),
+date_added varchar(50),
+release_year int,
+rating varchar(10),
+duration varchar(15),
+listed_in varchar(150),
+description varchar(250)
 );
 ```
 ##  Problems and Solutions
@@ -137,4 +139,62 @@ group by 1
 order by count desc;
 ```
 
-###
+### Find each year and the average number of content released in United States on netflix. return top 5 year with highest avg content release
+```sql
+select
+	extract(year from to_date(date_added, 'Month DD, YYYY')) as year_added,
+	count(*) as yearly_content,
+	round(count(*)::numeric/(select count(*) from netflix where country ='United States')::numeric * 100, 2) as avg_content_per_year
+from netflix
+where 
+	country = 'United States'
+	and date_added is not null
+group by 1;
+```
+
+### List all movies that are documentaries
+```sql
+select * 
+from netflix
+where listed_in ilike '%Documentaries%';
+```
+
+### Find all content without a director
+```sql
+select * 
+from netflix
+where director is null;
+```
+
+### Find how many movies actor 'Vin Diesel' appeared in last 10 years
+```sql
+select *
+from netflix
+where 
+	casts ilike '%Vin Diesel%'
+	and 
+	release_year >extract(year from current_date) - 10;
+```
+
+### Find the top 10 actors who have appeared in the highest number of movies produced in United Kingdom
+```sql
+select 
+	unnest(string_to_array(casts, ',')) as actors,
+	count(show_id) as total_movies_appeared
+from netflix
+where country ilike '%United Kingdom%'
+group by 1
+order by 2 desc
+limit 10
+```
+
+## 📊 Findings and Conclusion
+#### Key Findings:
+##### 📊 Movies dominate Netflix's catalog, accounting for approximately 70%.
+##### 🌟 TV-MA and TV-14 are the most common ratings.
+##### 📅 The 2010s and 2020s witnessed significant growth in content production.
+##### 🌍 The United States leads both in movie and TV show production, followed by India and the UK.
+##### ⏱️ Movies average 90-120 minutes, while TV shows vary greatly in length.
+
+## Conclusion:
+The insights reveal Netflix's strategic focus on original content, global diversity, and an emphasis on recent productions. These findings provide valuable data for enhancing user engagement and targeting specific audience demographics.
